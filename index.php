@@ -22,6 +22,9 @@ $notas = $db->query("SELECT n.*, al.nombre, al.apellido FROM notas n INNER JOIN 
         <div class="text-center mb-4">
             <h1 class="fw-bold text-dark">Plataforma de Gestión Académica</h1>
             <p class="text-muted">Módulos unificados de Alumnos, Asistencias y Calificaciones</p>
+            <a href="controllers/reporte.php" target="_blank" class="btn btn-danger fw-bold shadow-sm mt-2">
+                📥 Descargar Reporte General en PDF
+            </a>
         </div>
 
         <ul class="nav nav-pills nav-justified mb-4 shadow-sm bg-white p-2 rounded" id="academicTabs" role="tablist">
@@ -84,7 +87,7 @@ $notas = $db->query("SELECT n.*, al.nombre, al.apellido FROM notas n INNER JOIN 
                                         </tr>
                                         <?php endforeach; ?>
                                     </tbody>
-                                </table>
+                                end</table>
                             </div>
                         </div>
                     </div>
