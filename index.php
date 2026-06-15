@@ -5,6 +5,7 @@ $db = Database::getConnection();
 $alumnos = $db->query("SELECT * FROM alumnos ORDER BY apellido ASC")->fetchAll();
 $asistencias = $db->query("SELECT a.*, al.nombre, al.apellido FROM asistencias a INNER JOIN alumnos al ON a.id_alumno = al.id_alumno ORDER BY a.id_asistencia DESC")->fetchAll();
 $notas = $db->query("SELECT n.*, al.nombre, al.apellido FROM notas n INNER JOIN alumnos al ON n.id_alumno = al.id_alumno ORDER BY n.id_nota DESC")->fetchAll();
+$documentos = $db->query("SELECT d.*, al.nombre, al.apellido FROM documentos d INNER JOIN alumnos al ON d.id_alumno = al.id_alumno ORDER BY d.id_documento DESC")->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -21,7 +22,7 @@ $notas = $db->query("SELECT n.*, al.nombre, al.apellido FROM notas n INNER JOIN 
     <div class="container mt-4">
         <div class="text-center mb-4">
             <h1 class="fw-bold text-dark">Plataforma de Gestión Académica</h1>
-            <p class="text-muted">Módulos unificados de Alumnos, Asistencias y Calificaciones</p>
+            <p class="text-muted">Módulos unificados de Alumnos, Asistencias, Calificaciones y Expedientes</p>
             <a href="controllers/reporte.php" target="_blank" class="btn btn-danger fw-bold shadow-sm mt-2">
                 📥 Descargar Reporte General en PDF
             </a>
@@ -36,6 +37,9 @@ $notas = $db->query("SELECT n.*, al.nombre, al.apellido FROM notas n INNER JOIN 
             </li>
             <li class="nav-item">
                 <button class="nav-link fw-bold" id="notas-tab" data-bs-toggle="tab" data-bs-target="#panel-notas" type="button" role="tab">📝 Registro de Notas</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-bold" id="docs-tab" data-bs-toggle="tab" data-bs-target="#panel-docs" type="button" role="tab">📂 Expediente Digital</button>
             </li>
         </ul>
 
@@ -87,7 +91,7 @@ $notas = $db->query("SELECT n.*, al.nombre, al.apellido FROM notas n INNER JOIN 
                                         </tr>
                                         <?php endforeach; ?>
                                     </tbody>
-                                end</table>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -204,6 +208,61 @@ $notas = $db->query("SELECT n.*, al.nombre, al.apellido FROM notas n INNER JOIN 
                                             <td>
                                                 <button class="btn btn-sm btn-warning text-white" onclick='edNota(<?= json_encode($nt) ?>)'>Editar</button>
                                                 <a href="controllers/AsistenciaController.php?eliminar=<?= $nt['id_nota'] ?>&tabla=notas" class="btn btn-sm btn-danger">Borrar</a>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="panel-docs" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-info text-white py-3"><h5 class="mb-0">Cargar Archivo al Expediente</h5></div>
+                            <div class="card-body p-4">
+                                <form action="controllers/AsistenciaController.php" method="POST" enctype="multipart/form-data">
+                                    <input type="hidden" name="modulo" value="documento">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Seleccionar Alumno</label>
+                                        <select class="form-select" name="id_alumno" required>
+                                            <?php foreach ($alumnos as $al): ?><option value="<?= $al['id_alumno'] ?>"><?= htmlspecialchars($al['apellido'] . ' ' . $al['nombre']) ?></option><?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Descripción / Nombre del Documento</label>
+                                        <input type="text" class="form-control" name="nombre_documento" placeholder="Ej: Foto Carnet, Copia Cédula" required>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label fw-semibold">Archivo Físico</label>
+                                        <input type="file" class="form-control" name="archivo" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-info w-100 text-white fw-bold">Subir Archivo</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body p-0">
+                                <table class="table table-hover align-middle mb-0 text-center">
+                                    <thead class="table-dark">
+                                        <tr><th>Estudiante</th><th>Descripción del Documento</th><th>Archivo</th><th>Acciones</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($documentos as $doc): ?>
+                                        <tr>
+                                            <td class="text-start ps-3"><?= htmlspecialchars($doc['apellido'] . ' ' . $doc['nombre']) ?></td>
+                                            <td class="text-start ps-3"><?= htmlspecialchars($doc['nombre_documento']) ?></td>
+                                            <td>
+                                                <a href="uploads/<?= $doc['ruta_archivo'] ?>" target="_blank" class="btn btn-sm btn-outline-primary fw-bold">👁️ Ver / Descargar</a>
+                                            </td>
+                                            <td>
+                                                <a href="controllers/AsistenciaController.php?eliminar=<?= $doc['id_documento'] ?>&tabla=documentos" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar de forma permanente este archivo?')">Eliminar</a>
                                             </td>
                                         </tr>
                                         <?php endforeach; ?>
