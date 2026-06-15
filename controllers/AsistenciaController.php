@@ -53,6 +53,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    elseif ($modulo === 'documento') {
+        if (isset($_FILES['archivo']) && $_FILES['archivo']['error'] === UPLOAD_ERR_OK) {
+            $dirSubida = __DIR__ . '/../uploads/';
+            $nombreOriginal = $_FILES['archivo']['name'];
+            $extension = pathinfo($nombreOriginal, PATHINFO_EXTENSION);
+            
+            $nuevoNombre = uniqid('DOC_', true) . '.' . $extension;
+            $rutaCompleta = $dirSubida . $nuevoNombre;
+
+            if (move_uploaded_file($_FILES['archivo']['tmp_name'], $rutaCompleta)) {
+                $stmt = $db->prepare("INSERT INTO documentos (id_alumno, nombre_documento, ruta_archivo, tipo_archivo) VALUES (:id_alumno, :nombre, :ruta, :tipo)");
+                $stmt->execute([
+                    ':id_alumno' => $_POST['id_alumno'],
+                    ':nombre' => $_POST['nombre_documento'],
+                    ':ruta' => $nuevoNombre,
+                    ':tipo' => $_FILES['archivo']['type']
+                ]);
+            }
+        }
+    }
+
     header('Location: ../index.php');
     exit();
 }
@@ -63,13 +84,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['eliminar'])) {
 
     if ($tabla === 'alumnos') {
         $stmt = $db->prepare("DELETE FROM alumnos WHERE id_alumno = ?");
+        $stmt->execute([$id]);
     } elseif ($tabla === 'asistencias') {
         $stmt = $db->prepare("DELETE FROM asistencias WHERE id_asistencia = ?");
+        $stmt->execute([$id]);
     } elseif ($tabla === 'notas') {
         $stmt = $db->prepare("DELETE FROM notas WHERE id_nota = ?");
-    }
-
-    if (isset($stmt)) {
+        $stmt->execute([$id]);
+    } elseif ($tabla === 'documentos') {
+        $stmtArc = $db->prepare("SELECT ruta_archivo FROM documentos WHERE id_documento = ?");
+        $stmtArc->execute([$id]);
+        $archivo = $stmtArc->fetch();
+        
+        if ($archivo) {
+            $rutaFisica = __DIR__ . '/../uploads/' . $archivo['ruta_archivo'];
+            if (file_exists($rutaFisica)) {
+                unlink($rutaFisica);
+            }
+        }
+        
+        $stmt = $db->prepare("DELETE FROM documentos WHERE id_documento = ?");
         $stmt->execute([$id]);
     }
 
